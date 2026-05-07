@@ -1,0 +1,14 @@
+node_modules/
+dist/
+*.log
+.env*
+.DS_Store
+*.tmp
+*.swp
+coverage/
+
+# 個人のデバッグ・学習用ファイル
+debug-me.mjs
+.vscode/launch.json
+sample.md
+demo.mjs
