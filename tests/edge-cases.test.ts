@@ -1,5 +1,9 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { createRetryFetch } from "../src/index";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("edge cases", () => {
   describe("Request body preservation on retry", () => {
@@ -15,6 +19,7 @@ describe("edge cases", () => {
         }
         return new Response(null, { status: 200 });
       });
+      vi.spyOn(globalThis, "fetch").mockImplementation(mockFetch);
 
       const fetchWithRetry = createRetryFetch({
         retries: 3,
@@ -27,10 +32,7 @@ describe("edge cases", () => {
         body: JSON.stringify({ key: "value" }),
       });
 
-      const response = await fetchWithRetry(request, {
-        // @ts-expect-error - injecting mock fetch for testing
-        fetch: mockFetch,
-      });
+      const response = await fetchWithRetry(request);
 
       expect(response.status).toBe(200);
       expect(bodies).toEqual([
@@ -51,6 +53,7 @@ describe("edge cases", () => {
         }
         return new Response(null, { status: 200 });
       });
+      vi.spyOn(globalThis, "fetch").mockImplementation(mockFetch);
 
       const fetchWithRetry = createRetryFetch({
         retries: 3,
@@ -61,8 +64,6 @@ describe("edge cases", () => {
       const response = await fetchWithRetry("https://example.com", {
         method: "POST",
         body: JSON.stringify({ data: "test" }),
-        // @ts-expect-error
-        fetch: mockFetch,
       });
 
       expect(response.status).toBe(200);
@@ -83,6 +84,7 @@ describe("edge cases", () => {
       const mockFetch = vi.fn(async () => {
         return new Response(null, { status: 503 });
       });
+      vi.spyOn(globalThis, "fetch").mockImplementation(mockFetch);
 
       const fetchWithRetry = createRetryFetch({
         retries: 3,
@@ -93,8 +95,6 @@ describe("edge cases", () => {
       const response = await fetchWithRetry("https://example.com", {
         method: "POST",
         body: stream,
-        // @ts-expect-error
-        fetch: mockFetch,
         duplex: "half",
       } as RequestInit);
 
