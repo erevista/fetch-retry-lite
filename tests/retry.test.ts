@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { createRetryFetch } from "../src/index";
 
 // Helper to create a mock fetch that returns responses in sequence
@@ -11,6 +11,10 @@ function createMockFetch(responses: Array<{ status: number } | Error>) {
   });
 }
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe("core retry loop", () => {
   describe("5xx retry", () => {
     it("retries on 503 and succeeds on third attempt", async () => {
@@ -19,16 +23,15 @@ describe("core retry loop", () => {
         { status: 503 },
         { status: 200 },
       ]);
+      vi.spyOn(globalThis, "fetch").mockImplementation(mockFetch);
+
       const fetchWithRetry = createRetryFetch({
         retries: 3,
         retryDelay: 1,
         jitter: false,
       });
 
-      const response = await fetchWithRetry("https://example.com", {
-        // @ts-expect-error - injecting mock fetch for testing
-        fetch: mockFetch,
-      });
+      const response = await fetchWithRetry("https://example.com");
 
       expect(response.status).toBe(200);
       expect(mockFetch).toHaveBeenCalledTimes(3);
@@ -37,19 +40,20 @@ describe("core retry loop", () => {
     it("retries on 500, 502, 503, 504 by default", async () => {
       for (const status of [500, 502, 503, 504]) {
         const mockFetch = createMockFetch([{ status }, { status: 200 }]);
+        vi.spyOn(globalThis, "fetch").mockImplementation(mockFetch);
+
         const fetchWithRetry = createRetryFetch({
           retries: 3,
           retryDelay: 1,
           jitter: false,
         });
 
-        const response = await fetchWithRetry("https://example.com", {
-          // @ts-expect-error
-          fetch: mockFetch,
-        });
+        const response = await fetchWithRetry("https://example.com");
 
         expect(response.status).toBe(200);
         expect(mockFetch).toHaveBeenCalledTimes(2);
+
+        vi.restoreAllMocks();
       }
     });
 
@@ -60,16 +64,15 @@ describe("core retry loop", () => {
         { status: 500 },
         { status: 500 },
       ]);
+      vi.spyOn(globalThis, "fetch").mockImplementation(mockFetch);
+
       const fetchWithRetry = createRetryFetch({
         retries: 3,
         retryDelay: 1,
         jitter: false,
       });
 
-      const response = await fetchWithRetry("https://example.com", {
-        // @ts-expect-error
-        fetch: mockFetch,
-      });
+      const response = await fetchWithRetry("https://example.com");
 
       expect(response.status).toBe(500);
       expect(mockFetch).toHaveBeenCalledTimes(4); // 1 initial + 3 retries
@@ -82,16 +85,15 @@ describe("core retry loop", () => {
         new TypeError("Failed to fetch"),
         { status: 200 },
       ]);
+      vi.spyOn(globalThis, "fetch").mockImplementation(mockFetch);
+
       const fetchWithRetry = createRetryFetch({
         retries: 3,
         retryDelay: 1,
         jitter: false,
       });
 
-      const response = await fetchWithRetry("https://example.com", {
-        // @ts-expect-error
-        fetch: mockFetch,
-      });
+      const response = await fetchWithRetry("https://example.com");
 
       expect(response.status).toBe(200);
       expect(mockFetch).toHaveBeenCalledTimes(2);
@@ -104,6 +106,8 @@ describe("core retry loop", () => {
         new TypeError("Failed to fetch"),
         new TypeError("Failed to fetch"),
       ]);
+      vi.spyOn(globalThis, "fetch").mockImplementation(mockFetch);
+
       const fetchWithRetry = createRetryFetch({
         retries: 3,
         retryDelay: 1,
@@ -111,10 +115,7 @@ describe("core retry loop", () => {
       });
 
       await expect(
-        fetchWithRetry("https://example.com", {
-          // @ts-expect-error
-          fetch: mockFetch,
-        })
+        fetchWithRetry("https://example.com")
       ).rejects.toThrow("Failed to fetch");
 
       expect(mockFetch).toHaveBeenCalledTimes(4);
@@ -124,16 +125,15 @@ describe("core retry loop", () => {
   describe("4xx no-retry", () => {
     it("does not retry on 404", async () => {
       const mockFetch = createMockFetch([{ status: 404 }]);
+      vi.spyOn(globalThis, "fetch").mockImplementation(mockFetch);
+
       const fetchWithRetry = createRetryFetch({
         retries: 3,
         retryDelay: 1,
         jitter: false,
       });
 
-      const response = await fetchWithRetry("https://example.com", {
-        // @ts-expect-error
-        fetch: mockFetch,
-      });
+      const response = await fetchWithRetry("https://example.com");
 
       expect(response.status).toBe(404);
       expect(mockFetch).toHaveBeenCalledTimes(1);
@@ -142,19 +142,20 @@ describe("core retry loop", () => {
     it("does not retry on 400, 401, 403", async () => {
       for (const status of [400, 401, 403]) {
         const mockFetch = createMockFetch([{ status }]);
+        vi.spyOn(globalThis, "fetch").mockImplementation(mockFetch);
+
         const fetchWithRetry = createRetryFetch({
           retries: 3,
           retryDelay: 1,
           jitter: false,
         });
 
-        const response = await fetchWithRetry("https://example.com", {
-          // @ts-expect-error
-          fetch: mockFetch,
-        });
+        const response = await fetchWithRetry("https://example.com");
 
         expect(response.status).toBe(status);
         expect(mockFetch).toHaveBeenCalledTimes(1);
+
+        vi.restoreAllMocks();
       }
     });
   });
@@ -162,16 +163,15 @@ describe("core retry loop", () => {
   describe("retries count", () => {
     it("retries: 0 means no retry (single attempt)", async () => {
       const mockFetch = createMockFetch([{ status: 503 }]);
+      vi.spyOn(globalThis, "fetch").mockImplementation(mockFetch);
+
       const fetchWithRetry = createRetryFetch({
         retries: 0,
         retryDelay: 1,
         jitter: false,
       });
 
-      const response = await fetchWithRetry("https://example.com", {
-        // @ts-expect-error
-        fetch: mockFetch,
-      });
+      const response = await fetchWithRetry("https://example.com");
 
       expect(response.status).toBe(503);
       expect(mockFetch).toHaveBeenCalledTimes(1);
@@ -196,6 +196,8 @@ describe("core retry loop", () => {
         { status: 503 },
         { status: 200 },
       ]);
+      vi.spyOn(globalThis, "fetch").mockImplementation(mockFetch);
+
       const fetchWithRetry = createRetryFetch({
         retries: 3,
         retryDelay: 300,
@@ -203,14 +205,9 @@ describe("core retry loop", () => {
         jitter: false,
       });
 
-      await fetchWithRetry("https://example.com", {
-        // @ts-expect-error
-        fetch: mockFetch,
-      });
+      await fetchWithRetry("https://example.com");
 
       expect(delays).toEqual([300, 600, 1200]);
-
-      vi.restoreAllMocks();
     });
   });
 });

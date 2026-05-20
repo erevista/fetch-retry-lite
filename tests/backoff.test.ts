@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import { calculateDelay } from "../src/backoff";
 import { DEFAULT_RETRY_OPTIONS, type ResolvedRetryOptions } from "../src/defaults";
 import { createRetryFetch } from "../src/index";
@@ -11,6 +11,10 @@ function createMockFetch(responses: Array<{ status: number } | Error>) {
     return new Response(null, { status: item.status });
   });
 }
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("Full Jitter", () => {
   it("produces delay between 0 and calculated value (default ON)", () => {
@@ -181,6 +185,7 @@ describe("backoff integration with retry loop", () => {
       { status: 503 },
       { status: 200 },
     ]);
+    vi.spyOn(globalThis, "fetch").mockImplementation(mockFetch);
 
     const fetchWithRetry = createRetryFetch({
       retries: 3,
@@ -189,13 +194,8 @@ describe("backoff integration with retry loop", () => {
       jitter: false,
     });
 
-    await fetchWithRetry("https://example.com", {
-      // @ts-expect-error
-      fetch: mockFetch,
-    });
+    await fetchWithRetry("https://example.com");
 
     expect(delays).toEqual([500, 500]);
-
-    vi.restoreAllMocks();
   });
 });

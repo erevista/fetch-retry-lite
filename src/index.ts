@@ -22,17 +22,6 @@ export function createRetryFetch(defaults?: Partial<RetryOptions>): RetryFetch {
     const { retry: perRequestRetry, ...fetchInit } = init ?? {};
     const options = mergeOptions(globalDefaults, perRequestRetry);
 
-    // Back door for injecting a mock fetch in tests
-    const initWithFetch = init as Record<string, unknown> | undefined;
-    const customFetch = initWithFetch?.fetch as typeof fetch | undefined;
-
-    let fetchFn: typeof fetch;
-    if (customFetch) {
-      fetchFn = customFetch;
-    } else {
-      fetchFn = globalThis.fetch;
-    }
-
-    return executeWithRetry(fetchFn, input, fetchInit, options);
+    return executeWithRetry(globalThis.fetch, input, fetchInit, options);
   };
 }
