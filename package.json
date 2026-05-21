@@ -1,10 +1,28 @@
 {
   "name": "fetch-retry-lite",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Lightweight fetch retry with exponential backoff and full jitter. Zero dependencies.",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "keywords": [
+    "fetch",
+    "retry",
+    "backoff",
+    "exponential-backoff",
+    "jitter",
+    "fetch-retry",
+    "network",
+    "resilience"
+  ],
+  "homepage": "https://github.com/erevista/fetch-retry-lite#readme",
+  "bugs": {
+    "url": "https://github.com/erevista/fetch-retry-lite/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/erevista/fetch-retry-lite.git"
+  },
+  "license": "MIT",
+  "author": "Elevista Inc.",
+  "type": "commonjs",
   "exports": {
     ".": {
       "import": {
@@ -17,24 +35,14 @@
       }
     }
   },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "directories": {
+    "test": "tests"
+  },
   "files": [
     "dist"
   ],
-  "keywords": [
-    "fetch",
-    "retry",
-    "backoff",
-    "exponential-backoff",
-    "jitter",
-    "fetch-retry",
-    "network",
-    "resilience"
-  ],
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/erevista/fetch-retry-lite"
-  },
   "scripts": {
     "build": "tsup",
     "test": "vitest run",
@@ -45,5 +53,6 @@
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",
     "vitest": "^2.0.0"
-  }
+  },
+  "module": "./dist/index.mjs"
 }
